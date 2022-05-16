@@ -36,6 +36,7 @@ The whole project include the following steps
 <summary>Descriptive Analysis</summary>
   
 - The whole report:
+  
   [Prediction on Soybean Variety Yield an application.pdf](https://github.com/LeeGorden/Prediction-on-Soybean-Variety-Yield-and-apply-to-Soybean-Variety-Selection/files/8703041/Prediction.on.Soybean.Variety.Yield.an.application.pdf)
 
 - ![image](https://user-images.githubusercontent.com/72702872/168672066-dcd3c8eb-11b0-4ffb-b2de-0cbfe7f7399f.png)
@@ -57,6 +58,7 @@ The whole project include the following steps
 <summary>Predictive Analysis</summary>
   
 - Performance of different models:
+  
   ![image](https://user-images.githubusercontent.com/72702872/168673748-9a288c0c-3a9f-47ee-8188-a4ccbde63a0c.png)
   
 </details>
@@ -69,9 +71,11 @@ Now, we have the best model to predict each kind of Soybean's yield based on dif
 Since the weather condition of future is not determined, we can estimate weather condition distribution of temperature, precipitation and radiation to find out the best combination with highest Yield / σ (In this case, we treat each kind of Soybean as a stock, the purpose is to optimize the combo with the goal to maximize Shap ratio = Expected Return / σ).
   
 - Based on weather condition history, the distribution of temperature, precipitation and radiation are as follow: 
+  
   ![image](https://user-images.githubusercontent.com/72702872/168674274-1ab7154d-677d-4c99-ae1c-a399f6802f2e.png)
 
 - According to the distribution of weather condition above, corresponding yield of chosen star Soybeans are as follows:
+  
   ![image](https://user-images.githubusercontent.com/72702872/168675234-6b3c3ab0-5a73-4d2a-a536-8e6077051e2c.png)
 
 - The **Markowitz** bullet curve is as follow:
