@@ -37,16 +37,15 @@ The whole project include the following steps
   
 - The whole report:[Prediction on Soybean Variety Yield an application.pdf](https://github.com/LeeGorden/Prediction-on-Soybean-Variety-Yield-and-apply-to-Soybean-Variety-Selection/files/8703041/Prediction.on.Soybean.Variety.Yield.an.application.pdf)
 
-  
 - ![image](https://user-images.githubusercontent.com/72702872/168672066-dcd3c8eb-11b0-4ffb-b2de-0cbfe7f7399f.png)
 
 - ![image](https://user-images.githubusercontent.com/72702872/168672253-9e58dcfc-2e40-4415-9a68-ff3a174ddc67.png)
 
 - ![image](https://user-images.githubusercontent.com/72702872/168672386-20f37ec9-3daf-4e64-b317-0fccc52e0cec.png)
 
-- 
+- ![image](https://user-images.githubusercontent.com/72702872/168672921-57764f2f-31e7-474b-9ee8-20ad34f6ad2e.png)
   
-- 
+- Cluster result(K-means) of different types of Soybean based on latitude and longitude. ![image](https://user-images.githubusercontent.com/72702872/168672980-3ece86ec-761a-49f6-bcfe-8af77c856a3e.png)
   
 - 
 
