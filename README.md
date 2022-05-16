@@ -81,6 +81,38 @@ Since the weather condition of future is not determined, we can estimate weather
   The best combination appears at the tangent of the curve.
   
 </details>
+  
+<details open>
+<summary>Predictive Analysis</summary>
+  
+[1]. Hunger and Food Shortages, Kelly Kean Sharp
+   
+[2]. Washington University in St Louis 500S Guidline
+   
+[3]. INFLUENCE OF CROPPING SYSTEM INTENSITY ON YIELD AND YIELD 
+COMPONENTS OF NEW SOYBEAN GENOTYPES[J], Ana POSPIŠIL, Milan 
+POSPIŠIL, Svjetlana MATOTAN, Dario JAREŠ, Bogdan KORIĆ, Cereal 
+Research Communications, Vol. 37, Supplement: Proceedings of the VIII. AlpsAdria Scientific Workshop, 27 April–2 May 2009, Neum, Bosnia-Herzegovina 
+(March 2009), pp. 41-44
+   
+[4]. Trophic cascades in agricultural landscapes: indirect effects of landscape 
+composition on crop yield[J]. Heidi Liere, Tania N. Kim, Benjamin P. Werling, 
+Timothy D. Meehan, Douglas A. Landis, Claudio Gratton Ecological 
+Applications, Vol. 25, No. 3 (April 2015), pp. 652-661
+   
+[5]. Cultural Strategies for Managing Weeds and Soil Moisture in Cover Crop 
+Based No-Till Soybean Production[J].M. Scott Wells, S. Chris Reberg-Horton, 
+Steven B. Mirsky, Weed Science, Vol. 62, No. 3 (July-September 2014), pp. 
+501-511
+   
+[6]. On the Markowitz mean–variance analysis of self-financing portfolios[R];
+Bai Zhidong, Liu, Huixia, Wong, Wing-Keung; KLAS, Math & Stat, Northeast 
+Normal University and DSAP & RMI, National University of Singapore, 
+Singapore | Department of Statistics, National University of Singapore, 
+Singapore | Department of Economics, Hong Kong Baptist University, Hong 
+Kong
+  
+</details>
 
 ## <div align="center">Contact</div>
 
