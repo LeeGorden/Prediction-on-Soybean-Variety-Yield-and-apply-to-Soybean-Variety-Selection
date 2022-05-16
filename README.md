@@ -32,9 +32,9 @@ The whole project include the following steps
 <details open>
 <summary>Result</summary>
 
-- The whole report:
-  
-- 
+- The whole report:[Prediction on Soybean Variety Yield an application.pdf](https://github.com/LeeGorden/Prediction-on-Soybean-Variety-Yield-and-apply-to-Soybean-Variety-Selection/files/8703041/Prediction.on.Soybean.Variety.Yield.an.application.pdf)
+
+- ![image](https://user-images.githubusercontent.com/72702872/168672066-dcd3c8eb-11b0-4ffb-b2de-0cbfe7f7399f.png)
 
 - 
 
