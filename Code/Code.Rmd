@@ -1,0 +1,529 @@
+---
+title: "Final option 1"
+author: "Gorden Li"
+date: "2021/4/14"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Read Data
+```{r}
+rm(list = ls())
+data = read.csv('data.csv')
+data_eva = read.csv('data_eva.csv')
+
+data$Location = as.factor(data$Location)
+data$Variety = as.factor(data$Variety)
+colnames(data)[1] = 'GrowingSeason'
+colnames(data_eva)[1] = 'GrowingSeason'
+data_eva = subset(data_eva, select = -c(GrowingSeason))
+```
+
+
+### Descriptive Analytics
+1.Visualization of locations of farm
+```{r}
+#Split the Location variables out of whole data set
+data_map = data[c('Location','Latitude','Longitude')]
+data_map = na.omit(data_map)
+```
+
+https://blog.csdn.net/qq_42763389/article/details/83502677
+```{r}
+###Import in library used to plot data
+library(ggplot2)
+library(ggmap)
+
+###Draw the map
+#Create a clear map
+mp = NULL
+#Deaw a basic map
+USAmp = borders('state', colour = 'grey50', fill = 'white')
+#利用ggplot呈现，同时地图纵坐标范围从-60到90
+mp = ggplot() + USAmp + ylim(25,50)
+
+#绘制带点的地图，geom_point是在地图上绘制点，x轴为经度信息，y轴为纬度信息，size是将点的大小按照收集的个数确定，color为暗桔色，scale_size是将点变大一些
+mp2 = mp + geom_point(data = data_map, aes(x=Longitude, y=Latitude, size = 1), color = 'darkorange') + scale_size(range=c(1,1))
+
+#将图例去掉
+mp3 = mp2 + theme(legend.position = "none")
+
+mp3
+```
+
+2.Generate frequency distribution for varieties
+https://blog.csdn.net/biocity/article/details/85596311
+```{r}
+###Check the distribution of varieties
+summary(data$Variety)
+plot(data$Variety)
+
+#Select out Variety with at least 30 samples
+data_varieties = as.data.frame(table(data$Variety))
+data_varieties_rank = data_varieties[order(-data_varieties$Freq),]
+
+data_varieties$Var1 = as.character(data_varieties$Var1)
+Variety_own_mod = data_varieties[data_varieties[, 'Freq'] >= 30, 'Var1']
+Variety_own_mod = union(Variety_own_mod, 'Other_Varieties')
+```
+From the summary & plot of frequency, most of the varieties have more than 30 samples. Still, some varieties do not have enough samples
+
+3.Relationship between the locations and varieties
+```{r}
+#Create data set to study relation between Location & Varieties
+data_loc_var = data[c('Location','Variety')]
+relation_loc_var = table(data_loc_var)
+#relation_loc_var = as.data.frame.matrix(relation_loc_var) 此为将table转化为matrix形式(同时有colname，rowname)的DF
+
+#Return the relation between location & variety ranking by Freq
+relation_loc_var = as.data.frame(relation_loc_var)
+relation_loc_var = relation_loc_var[order(-relation_loc_var$Freq),]
+loc_var_chosen = relation_loc_var[1:40,]
+```
+
+4.Relationship between the locations and weather related variables
+```{r}
+#Create data set to study relation between Location & Varieties
+data_loc_wea = data[c('Location','Latitude','Longitude','Weather1','Weather2')]
+data_loc_wea$Weather1 = as.factor(data_loc_wea$Weather1)
+data_loc_wea$Weather2 = as.factor(data_loc_wea$Weather2)
+summary(data_loc_wea)
+
+#Return the relation between location & variety ranking by Freq
+relation_loc_wea1 = as.data.frame(table(data_loc_wea$Location, data_loc_wea$Weather1))
+relation_loc_wea1 = relation_loc_wea1[order(-relation_loc_wea1$Freq),]
+
+relation_loc_wea2 = as.data.frame(table(data_loc_wea$Location, data_loc_wea$Weather2))
+relation_loc_wea2 = relation_loc_wea1[order(-relation_loc_wea2$Freq),]
+```
+
+5.Plot the distribution of the yield variables and find out a realistic goal for the optimal portfolio at the target farm
+```{r}
+par(mfrow = c(2, 2))
+hist(data$Variety_Yield)
+hist(data$Yield_Difference)
+hist(data$Commercial_Yield)
+hist(data$Location_Yield)
+```
+
+### Predictive Analytics-Choose Variety_Yield as Y
+##Data Preprocess
+```{r}
+#Set Train Test Data
+data = na.omit(data)
+data = subset(data,select=-c(Commercial_Yield,Yield_Difference,Location_Yield))
+
+data$GrowingSeason = as.factor(data$GrowingSeason)
+data$Genetics = as.factor(data$Genetics)
+data$Experiment = as.factor(data$Experiment)
+data$RelativeMaturity = as.factor(data$RelativeMaturity)
+data$Weather1 = as.factor(data$Weather1)
+data$Weather2 = as.factor(data$Weather2)
+data$Soil_Type = as.factor(data$Soil_Type)
+```
+
+##Feature Filtering
+```{r}
+##Reduce dimension(reduce location related attribute)---K-Means Clustering
+#Min-Max normalization
+data_cluster = rbind(data[,c('Latitude','Longitude')], data_eva[,c('Latitude','Longitude')])
+
+#Min-Max normalization
+library(caret)
+norm.values=preProcess(data_cluster[,c('Latitude','Longitude')],method='range')
+data_cluster[,c('Latitude','Longitude')]=predict(norm.values,data_cluster[,c('Latitude','Longitude')])
+
+
+#K-Means Clustering
+cluster = data.frame('Cluster_num'=c(1: 50), 'withinss'=rep(0, 50))
+for (i in 1:50) {
+  set.seed(i)
+  location_cluster = kmeans(data_cluster,i,nstart=20)
+  cluster$withinss[i] = location_cluster$tot.withinss
+}
+
+plot(cluster)
+
+#According to the plot, finally choose 30 as cluster_num
+location_class = data.frame(location_class = kmeans(data_cluster,30,nstart=20)$cluster)
+location_class_train = as.data.frame(location_class[1:nrow(data_cluster)-1,1])
+colnames(location_class_train)[1] = 'location_class'
+location_class_eva = as.data.frame(location_class[nrow(data_cluster),1])
+colnames(location_class_eva)[1] = 'location_class'
+
+data = cbind(data[,1:4], location_class_train, data[,5:ncol(data)])
+data$location_class = as.factor(data$location_class)
+
+data_pro = subset(data, select = -c(Location, Genetics, Experiment, RelativeMaturity, Weather1, Weather2, CE))
+data_eva = cbind(data_eva[,1], location_class_eva, data_eva[,2:ncol(data_eva)])
+colnames(data_eva)[1] = 'Location'
+```
+
+```{r}
+#Split Data
+set.seed(1)
+train = sample(nrow(data_pro), nrow(data_pro)*0.7)
+```
+
+##Algorithm
+```{r}
+#Linear Regression✔
+data_pro_linear = data_pro
+data_pro_linear=cbind(data_pro_linear,class.ind(data_pro_linear$GrowingSeason))
+data_pro_linear=cbind(data_pro_linear,class.ind(data_pro_linear$location_class))
+data_pro_linear=cbind(data_pro_linear,class.ind(data_pro_linear$Soil_Type))
+data_pro_linear=cbind(data_pro_linear,class.ind(data_pro_linear$Variety))
+data_pro_linear=subset(data_pro_linear, select = -c(GrowingSeason,location_class,Soil_Type,Variety))
+
+lm.fit = lm(Variety_Yield~. ,data = data_pro_linear, subset = train)
+y_hat = predict(lm.fit, newdata=data_pro_linear[-train,])
+y_real = data_pro[-train,]$Variety_Yield
+lm_Test_RMSE = mean((y_hat-y_real)^2)^0.5
+```
+
+```{r}
+#LASSO✔
+library(glmnet)
+X_train = as.matrix(subset(data_pro_linear[train,], select = -c(Variety_Yield)))
+Y_train = as.matrix(data_pro_linear[train,]$Variety_Yield)
+X_test = as.matrix(subset(data_pro_linear[-train,], select = -c(Variety_Yield)))
+Y_test = as.matrix(data_pro_linear[-train,]$Variety_Yield)
+
+grid = 10^seq(10,-2,length=100)
+lasso.mod = glmnet(X_train,Y_train,alpha = 1,lambda = grid)
+
+#Choose the best lambda
+set.seed(1)
+cv.out = cv.glmnet(X_train,Y_train,alpha=1)
+bestlam = cv.out$lambda.min
+y_hat=predict(lasso.mod,s=bestlam,newx=X_test)
+y_real=Y_test
+lasso_Test_RMSE = mean((y_hat-y_real)^2)^0.5
+```
+
+```{r}
+#Regression Tree✔
+library(tree)
+tree_models = data.frame('Var'=Variety_own_mod, 'Model'=rep(0, length(Variety_own_mod)), 'Node_Num'=rep(0, length(Variety_own_mod)), 'Obj_Num' = rep(0, length(Variety_own_mod)),'Test_Num' = rep(0, length(Variety_own_mod)),'Total_Error'=rep(0, length(Variety_own_mod)),'Test_RMSE'=rep(0, length(Variety_own_mod)))
+
+for (i in 1:nrow(tree_models)) {
+  set.seed(i)
+  current_variety = tree_models$Var[i]
+  
+  #Set data_tree according to the Variety Chosen
+  if (current_variety != 'Other_Varieties') {
+    data_tree = subset(data_pro[data_pro$Variety == current_variety,], select = -c(Variety))}else{
+    data_tree = data_pro
+    for (j in 1:(nrow(tree_models)-1)) {
+      data_tree =  subset(data_tree, data_tree$Variety != tree_models$Var[j])
+    }
+    data_tree = subset(data_tree, select = -c(Variety))
+}
+  
+  tree_models$Obj_Num[i] = nrow(data_tree)
+    
+  #Split Train & Test within each Variety
+  train = sample(1:nrow(data_tree),nrow(data_tree)*0.7)
+  tree_models$Test_Num[i] = nrow(data_tree) - length(train)
+  
+  #Fit the model
+  tree.fit = tree(Variety_Yield~., data_tree, subset = train)
+  #Prune for the best tree
+  cv.best = cv.tree(tree.fit)
+  best_node_num = cv.best$size[which.min(cv.best$dev)]
+  tree.prune = prune.tree(tree.fit, best = best_node_num)
+  
+  if (best_node_num == 1) {
+    tree.prune = tree.fit 
+    best_node_num = 'No Prume'
+  }
+  tree_models$Model[i] = tree.prune
+  tree_models$Node_Num[i] = best_node_num
+  #Test RMSE/Total_Error
+  y_hat = predict(tree.prune, newdata=data_tree[-train,])
+  y_real = data_tree[-train,]$Variety_Yield
+  tree_models$Total_Error[i] = sum((y_hat-y_real)^2)
+  tree_models$Test_RMSE[i] = (mean((y_hat-y_real)^2))^0.5
+}
+
+tree_Test_RMSE = (sum(tree_models$Total_Error)/sum(tree_models$Test_Num))^0.5
+```
+
+```{r}
+#Baggedd Trees & Random Forest✔
+library(randomForest)
+forest_models = data.frame('Var'=Variety_own_mod, 'Bagged_Model'=rep(0, length(Variety_own_mod)), 'Forest_Model'=rep(0, length(Variety_own_mod)), 'Obj_Num' = rep(0, length(Variety_own_mod)),'Test_Num' = rep(0, length(Variety_own_mod)),'Bagged_Total_Error'=rep(0, length(Variety_own_mod)),'Bagged_Test_RMSE'=rep(0, length(Variety_own_mod)), 'Forest_Total_Error'=rep(0, length(Variety_own_mod)),'Forest_Test_RMSE'=rep(0, length(Variety_own_mod)))
+
+for (i in 1:nrow(forest_models)) {
+  set.seed(i)
+  current_variety = forest_models$Var[i]
+  
+  #Set data_forest according to the Variety Chosen
+  if (current_variety != 'Other_Varieties') {
+    data_forest = subset(data_pro[data_pro$Variety == current_variety,], select = -c(Variety))}else{
+    data_forest = data_pro
+    for (j in 1:(nrow(forest_models)-1)) {
+      data_forest =  subset(data_forest, data_forest$Variety != forest_models$Var[j])
+    }
+    data_forest = subset(data_forest, select = -c(Variety))
+}
+  
+  forest_models$Obj_Num[i] = nrow(data_forest)
+    
+  #Split Train & Test within each Variety
+  train = sample(1:nrow(data_forest),nrow(data_forest)*0.7)
+  forest_models$Test_Num[i] = nrow(data_forest) - length(train)
+  
+  #Fit the Model
+  bag.fit = randomForest(Variety_Yield~., data=data_forest, subset=train, mtry=ncol(data_forest)-1,        importance=TRUE, ntree = 30)
+  forest_models$Bagged_Model[i] = bag.fit
+  
+  forest.fit = randomForest(Variety_Yield~.,data=data_forest,subset=train,mtry=6,importance = TRUE,ntree   = 30)
+  forest_models$Forest_Model[i] = forest.fit
+  
+  #Test RMSE/Total_Error
+  y_real = data_forest[-train,]$Variety_Yield
+  y_hat_bag = predict(bag.fit, newdata=data_forest[-train,])
+  y_hat_forest = predict(forest.fit, newdata = data_forest[-train,])
+
+  forest_models$Bagged_Total_Error[i] = sum((y_hat_bag-y_real)^2)
+  forest_models$Bagged_Test_RMSE[i] = (mean((y_hat_bag-y_real)^2))^0.5
+  forest_models$Forest_Total_Error[i] = sum((y_hat_forest-y_real)^2)
+  forest_models$Forest_Test_RMSE[i] = (mean((y_hat_forest-y_real)^2))^0.5
+}
+
+bagged_Test_RMSE = (sum(forest_models$Bagged_Total_Error)/sum(forest_models$Test_Num))^0.5
+forest_Test_RMSE = (sum(forest_models$Forest_Total_Error)/sum(forest_models$Test_Num))^0.5
+```
+
+```{r}
+#Boosted Tree✔
+library(gbm)
+Variety_own_mod_boost = data_varieties[data_varieties[, 'Freq'] >= 62, 'Var1']
+Variety_own_mod_boost = union(Variety_own_mod_boost, 'Other_Varieties')
+
+boost_models = data.frame('Var'=Variety_own_mod_boost, 'Model'=rep(0, length(Variety_own_mod_boost)),  'Obj_Num' = rep(0, length(Variety_own_mod_boost)),'Test_Num' = rep(0, length(Variety_own_mod_boost)),'Total_Error'=rep(0, length(Variety_own_mod_boost)),'Test_RMSE'=rep(0, length(Variety_own_mod_boost)), 'Eva_Pred'=rep(0, length(Variety_own_mod_boost)))
+
+for (i in 1:nrow(boost_models)) {
+  set.seed(i)
+  current_variety = boost_models$Var[i]
+  
+  #Set data_boost according to the Variety Chosen
+  if (current_variety != 'Other_Varieties') {
+    data_boost = subset(data_pro[data_pro$Variety == current_variety,], select = -c(Variety, GrowingSeason))}else{
+    data_boost = subset(data_pro, select = -c(GrowingSeason))
+    for (j in 1:(nrow(boost_models)-1)) {
+      data_boost =  subset(data_boost, data_boost$Variety != boost_models$Var[j])
+    }
+    data_boost = subset(data_boost, select = -c(Variety))
+}
+  
+  boost_models$Obj_Num[i] = nrow(data_boost)
+    
+  #Split Train & Test within each Variety
+  train = sample(1:nrow(data_boost),nrow(data_boost)*0.7)
+  boost_models$Test_Num[i] = nrow(data_boost) - length(train)
+  
+  #Fit the model
+  boost.fit = gbm(Variety_Yield~.,data=data_boost[train,],distribution="gaussian",n.trees=40,interaction.depth=10,shrinkage=0.2, verbose=F)
+  boost_models$Model[i] = boost.fit
+
+  #Test RMSE/Total_Error
+  y_hat = predict(boost.fit,newdata=data_boost[-train,],n.trees=40)
+  y_real = data_boost[-train,]$Variety_Yield
+  boost_models$Total_Error[i] = sum((y_hat-y_real)^2)
+  boost_models$Test_RMSE[i] = (mean((y_hat-y_real)^2))^0.5
+  
+  #Predict Evaluation
+  boost_models$Eva_Pred[i] = predict(boost.fit,newdata=data_eva,n.trees=40)
+}
+
+boost_Test_RMSE = (sum(boost_models$Total_Error)/sum(boost_models$Test_Num))^0.5
+```
+
+```{r}
+#Neural Networks🏃
+library(neuralnet)
+data_pro_neural = data_pro
+set.seed(1)
+train = sample(nrow(data_pro_neural), nrow(data_pro_neural)*0.7)
+#Normalization
+numerical=c('Latitude','Longitude','Variety_Yield','Probability','RelativeMaturity25','Prob_IRR','Temp','Prec','Rad','Median_Temp','Median_Prec','Median_Rad','Density','Acres','PH1','AWC1','Clay1','Silt1','Sand1','Sand2','Silt2','Clay2','PH2','CEC')
+
+#Min-Max normalization
+norm.values=preProcess(data_pro_neural[,numerical],method='range')
+data_pro_neural[,numerical]=predict(norm.values,data_pro_neural[,numerical])
+
+#Convert categorical predictor to dummies
+library(nnet)
+data_pro_neural=cbind(data_pro_neural,class.ind(data_pro_neural$GrowingSeason))
+data_pro_neural=cbind(data_pro_neural,class.ind(data_pro_neural$Genetics))
+data_pro_neural=cbind(data_pro_neural,class.ind(data_pro_neural$location_class))
+data_pro_neural=cbind(data_pro_neural,class.ind(data_pro_neural$Soil_Type))
+
+data_pro_neural=subset(data_pro_neural,select=-c(GrowingSeason,Genetics,location_class,Soil_Type))
+
+#Fit the model
+f = as.formula(paste('Variety_Yield~',
+                   paste(names(data_pro_neural)[!names(data_pro_neural) %in% c('Variety_Yield')],
+                         collapse='+')))
+f
+nn=neuralnet(Variety_Yield~Latitude+Longitude+Probability+Temp+Prec+Rad+Median_Temp + 
+    Median_Prec + Median_Rad  ,data = data_pro_neural[train,], hidden = 5, linear.output = T)
+
+```
+
+##Prediction Using Boosted Tree
+```{r}
+#Simulate Temp, Radiation, Precipitation for 2011
+Eva_class = location_class[nrow(location_class),]
+data_eva_environment_condition = data_pro[data_pro$location_class == Eva_class, c('GrowingSeason', 'location_class', 'Temp', 'Prec', 'Rad')]
+
+set.seed(1)
+environment_2003 = data_eva_environment_condition[data_eva_environment_condition$GrowingSeason == '2003',]
+environment_2003 = environment_2003[sample(1:nrow(environment_2003), 100, replace = TRUE),]
+set.seed(1)
+environment_2004 = data_eva_environment_condition[data_eva_environment_condition$GrowingSeason == '2004',]
+environment_2004 = environment_2004[sample(1:nrow(environment_2004), 100, replace = TRUE),]
+set.seed(1)
+environment_2005 = data_eva_environment_condition[data_eva_environment_condition$GrowingSeason == '2005',]
+environment_2005 = environment_2005[sample(1:nrow(environment_2005), 100, replace = TRUE),]
+set.seed(1)
+environment_2006 = data_eva_environment_condition[data_eva_environment_condition$GrowingSeason == '2006',]
+environment_2006 = environment_2006[sample(1:nrow(environment_2006), 100, replace = TRUE),]
+set.seed(1)
+environment_2007 = data_eva_environment_condition[data_eva_environment_condition$GrowingSeason == '2007',]
+environment_2007 = environment_2007[sample(1:nrow(environment_2007), 100, replace = TRUE),]
+set.seed(1)
+environment_2008 = data_eva_environment_condition[data_eva_environment_condition$GrowingSeason == '2008',]
+environment_2008 = environment_2008[sample(1:nrow(environment_2008), 100, replace = TRUE),]
+set.seed(1)
+environment_2009 = data_eva_environment_condition[data_eva_environment_condition$GrowingSeason == '2009',]
+environment_2009 = environment_2009[sample(1:nrow(environment_2009), 100, replace = TRUE),]
+environment = rbind(environment_2003, environment_2004, environment_2005, environment_2006, environment_2007, environment_2008, environment_2009)
+environment = subset(environment, select = -c(GrowingSeason, location_class))
+
+data_eva = data_eva[sample(1:nrow(data_eva), 700, replace = TRUE),]
+data_eva[,c('Temp','Prec','Rad')] = environment[,c('Temp','Prec','Rad')]
+data_eva = subset(data_eva, select = -c(Location))
+```
+
+```{r}
+#Prediction of Boosted Tree
+set.seed(1)
+Variety_own_mod_boost = data_varieties[data_varieties[, 'Freq'] >= 62, 'Var1']
+Variety_own_mod_boost = union(Variety_own_mod_boost, 'Other_Varieties')
+
+pred_eva = as.data.frame(Variety_own_mod_boost)
+
+boost_result = data.frame('Var'=Variety_own_mod_boost, 'Eva_Pred'=rep(0, length(Variety_own_mod_boost)))
+
+for (i in 1:nrow(boost_result)) {
+  set.seed(i)
+  current_variety = boost_result$Var[i]
+  
+  #Set data_boost according to the Variety Chosen
+  if (current_variety != 'Other_Varieties') {
+    data_boost = subset(data_pro[data_pro$Variety == current_variety,], select = -c(Variety, GrowingSeason))}else{
+    data_boost = subset(data_pro, select = -c(GrowingSeason))
+    for (j in 1:(nrow(boost_result)-1)) {
+      data_boost =  subset(data_boost, data_boost$Variety != boost_result$Var[j])
+    }
+    data_boost = subset(data_boost, select = -c(Variety))
+}
+    
+  #Split Train & Test within each Variety
+  train = sample(1:nrow(data_boost),nrow(data_boost)*0.7)
+  
+  #Fit the model
+  boost.fit = gbm(Variety_Yield~.,data=data_boost[train,],distribution="gaussian",n.trees=40,interaction.depth=10,shrinkage=0.2, verbose=F)
+
+  #Predict Evaluation
+  for (k in 1:nrow(data_eva)) {
+    pred_eva[i,k+1] = predict(boost.fit,newdata=data_eva[k,],n.trees=40)
+  }
+}
+
+# 转置得到用于计算portfolio的pred_eva
+summary(data_eva[,c('Temp','Prec','Rad')])
+pred_eva_tab = t(pred_eva[,2:ncol(pred_eva)])
+colnames(pred_eva_tab) = pred_eva[,1]
+rownames(pred_eva_tab) = 1:700
+pred_eva = as.data.frame(pred_eva_tab)
+pred_eva = subset(pred_eva, select = -c(Other_Varieties))
+
+summary(pred_eva)
+```
+##Optimizing Portfolio Using Markowitz Mean-Variance Model
+```{r}
+hist(pred_eva$V100)
+```
+
+```{r}
+library(fPortfolio)
+#将df转化为time series才能使用模型
+data = as.timeSeries(pred_eva)
+data = data[, c('V180','V181','V128','V183', 'V44')]
+data = as.timeSeries(data)
+
+Frontier = portfolioFrontier(data)
+Frontier
+plot(Frontier)
+```
+
+
+# 计算得到收益率数据的协方差矩阵和期望
+sigma <- covEstimator(data)$Sigma
+mu <- covEstimator(data)$mu
+
+spec <- portfolioSpec(portfolio=list
+(targetReturn=80))
+# 设定组合的约束不许做空
+cons <- 'LongOnly'
+# 求解
+res <- efficientPortfolio(data, spec = spec,
+constraints = cons)
+summary(res)
+```
+```
+
+
+##马科维兹资产组合代码
+library(fPortfolio)
+mvspec<-portfolioSpec()
+setRiskFreeRate(mvspec)<-0
+setSolver(mvspec)<-"solveRshortExact"
+print(mvspec)
+data<-100*LPP2005
+Data<-portfolioData(100*LPP2005.RET,mvspec)#100*LPP2005.RET一些股票的收益率
+print(Data)
+constrains<-"Short"
+portfolioConstraints(data,mvspec,constrains)
+
+#方差最小组合求解
+globminportfolio<-minvariancePortfolio(Data,mvspec,constrains)
+print(globminportfolio)
+
+#在上面同等收益下，优化组合
+m1vspec<-portfolioSpec()
+data1<-100*LPP2005.RET
+Data1<-portfolioData(100*LPP2005.RET,m1vspec)
+n<-ncol(data1)
+setWeights(m1vspec)<-rep(1/n,n)
+m1vPortfolio<-feasiblePortfolio(Data1,m1vspec,constraints="LongOnly")
+print(m1vPortfolio)
+
+#做出有效前沿
+data2<-100*LPP2005.RET
+lppspec<-portfolioSpec()
+setRiskFreeRate(lppspec)<-0.005
+frontier<-portfolioFrontier(data2,lppspec)
+#plot(frontier)
+tailoredFrontierPlot(frontier)
+frontierPlot(frontier)
+cmlPoints(frontier,col=2)
+frontier
+weightsPlot(frontier)  
