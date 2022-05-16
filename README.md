@@ -75,7 +75,9 @@ Since the weather condition of future is not determined, we can estimate weather
   ![image](https://user-images.githubusercontent.com/72702872/168675234-6b3c3ab0-5a73-4d2a-a536-8e6077051e2c.png)
 
 - The **Markowitz** bullet curve is as follow:
+  
   ![image](https://user-images.githubusercontent.com/72702872/168677923-9745e923-4188-4600-bb10-96eb922d64af.png)
+  
   The best combination appears at the tangent of the curve.
   
 </details>
