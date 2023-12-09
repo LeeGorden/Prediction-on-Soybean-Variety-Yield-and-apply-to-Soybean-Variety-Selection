@@ -25,7 +25,7 @@ The whole project include the following steps
 
   Since the weather condition is not confirmed in future years, corresponding determining factors including temperature, moisture and radiation is not determined. Actually, their distribution can be estimated base weather condition history. Based on different weather condition, different type of Soybeans will have different yield.
 
-  With this, to find out the best combination of Soybean to generate maximum yield, **Markowitz** capital optimization is used.
+  With this, to find out the best combination of Soybean to generate maximum yield, Yield-Variance relation is explored.
 
 </details>
 
@@ -78,7 +78,7 @@ Since the weather condition of future is not determined, we can estimate weather
   
   ![image](https://user-images.githubusercontent.com/72702872/168675234-6b3c3ab0-5a73-4d2a-a536-8e6077051e2c.png)
 
-- The **Markowitz** bullet curve is as follow:
+- The **Yield-variance** curve is as follow:
   
   ![image](https://user-images.githubusercontent.com/72702872/168677923-9745e923-4188-4600-bb10-96eb922d64af.png)
   
